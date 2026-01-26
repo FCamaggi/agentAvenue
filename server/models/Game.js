@@ -129,8 +129,7 @@ const gameSchema = new mongoose.Schema({
     },
 })
 
-// Índices
-gameSchema.index({ lobbyCode: 1 })
+// Índices (lobbyCode ya tiene índice automático por unique: true)
 gameSchema.index({ status: 1 })
 gameSchema.index({ createdAt: 1 })
 
