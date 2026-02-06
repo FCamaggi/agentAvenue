@@ -195,7 +195,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
       </div>
 
       {/* Grid de casillas */}
-      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-1 p-[2%]">{
+      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-1 p-[2%]">
         {tiles.map((tile) => {
           const { bgColor, textColor, icon, rotation, isPath } =
             getTileConfig(tile);
