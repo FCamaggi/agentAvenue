@@ -20,13 +20,13 @@ const playerSchema = new mongoose.Schema({
     },
     hand: [{
         name: String,
-        movement: [Number], // [1st, 2nd, 3rd symbol]
+        movement: [], // [1st, 2nd, 3rd symbol] - puede contener números o strings ('win', 'lose')
     }],
     recruitedAgents: {
         type: Map,
         of: [{
             name: String,
-            movement: [Number],
+            movement: [], // puede contener números o strings ('win', 'lose')
         }],
         default: {},
     },
@@ -89,11 +89,11 @@ const gameSchema = new mongoose.Schema({
     },
     deck: [{
         name: String,
-        movement: [Number],
+        movement: [], // puede contener números o strings ('win', 'lose')
     }],
     discardPile: [{
         name: String,
-        movement: [Number],
+        movement: [], // puede contener números o strings ('win', 'lose')
     }],
     playedCards: {
         faceUp: {

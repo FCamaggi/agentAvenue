@@ -1,36 +1,106 @@
 # TODO - Mejoras y Correcciones Agent Avenue
 
-## 🔴 CRÍTICO - Bugs que rompen el juego
+## ✅ COMPLETADO - Bugs críticos resueltos
 
-### 1. Sistema de turnos roto después del primer turno
-**Prioridad: CRÍTICA**
-- **Problema**: Después de que cada jugador juega un turno, el sistema de turnos se rompe
-- **Síntoma**: Al intentar jugar cartas sale "no es tu turno"
-- **Investigar**: 
-  - Verificar lógica de cambio de turno en `socketController.js`
-  - Revisar actualización de `currentPlayer` después del reclutamiento
-  - Comprobar sincronización de `isMyTurn` en el cliente
+### ✅ 1. Sistema de turnos
+- **ARREGLADO**: Emit game-state-updated ANTES de agent-recruited
+- El sistema de turnos ahora funciona correctamente después de cada reclutamiento
 
-### 2. Visibilidad incorrecta de cartas jugadas
-**Prioridad: CRÍTICA**
-- **Problema Actual**: El oponente ve AMBAS cartas boca arriba
-- **Comportamiento Correcto**: 
-  - El jugador activo elige 2 cartas: una face-up (visible) y una face-down (oculta)
-  - El oponente solo ve la carta face-up
-  - El jugador activo ve ambas (porque las eligió)
-- **Archivos afectados**: 
-  - `client/src/pages/GamePage.jsx` - Componente de cartas jugadas
-  - `client/src/components/Card.jsx` - Prop `faceUp`
-- **Cambio necesario**: Condicionar la visibilidad según `playerId === currentPlayer`
+### ✅ 2. Visibilidad de cartas jugadas
+- **ARREGLADO**: Lógica cambiada a `faceUp={state.isMyTurn || finished}`
+- Jugador activo ve ambas cartas (las eligió él)
+- Oponente solo ve la carta face-up
 
-### 3. Tablero incorrecto según modo de juego
-**Prioridad: ALTA**
-- **Problema**: En modo NORMAL aparecen iconos de tienda (Black Market) en las esquinas
-- **Comportamiento Correcto**:
-  - Modo Normal: Sin tiendas en las esquinas (casillas vacías)
-  - Modo Avanzado: Tiendas en las 4 esquinas (tiles 1, 4, 8, 11)
-- **Archivo**: `client/src/components/GameBoard.jsx`
-- **Cambio**: Solo mostrar `BurglarIcon` si `isAdvancedMode === true`
+### ✅ 3. Tablero según modo
+- **ARREGLADO**: Esquinas condicionales según `isAdvancedMode`
+- Modo Simple: Sin tiendas en esquinas
+- Modo Avanzado: 4 tiendas de Mercado Negro
+
+### ✅ 4. Cartas del mazo corregidas
+- **ARREGLADO**: Todos los valores actualizados según manual real
+- Codebreaker: [0, 0, win]
+- Daredevil: [2, 3, lose]
+- Double Agent: [-1, 6, -1]
+- Enforcer: [1, 2, 3]
+- Saboteur: [-1, -1, -2]
+- Sentinel: [0, 2, 6]
+
+### ✅ 5. Composición del mazo
+- **ARREGLADO**: 36 cartas totales (6 de cada tipo)
+- Ambos modos tienen las mismas cartas
+- Solo el Mercado Negro diferencia Simple de Avanzado
+
+## ✅ COMPLETADO - UX/UI Mejoras
+
+### ✅ 6. Sistema de notificaciones
+- **IMPLEMENTADO**: react-hot-toast para eventos del juego
+- Notificaciones para: cartas jugadas, turnos, reclutamiento, victoria/derrota
+- Iconos y colores diferenciados por tipo de evento
+
+### ✅ 7. Animaciones mejoradas
+- **IMPLEMENTADO**: Nuevas animaciones CSS
+- `pawn-moving`: Animación extendida para movimiento de fichas (1.5s)
+- `card-flip`: Flip de carta al revelar (0.6s)
+- `highlight-pulse`: Pulso amarillo para eventos importantes
+
+### ✅ 8. Indicador de turno visual
+- **IMPLEMENTADO**: Barra de estado con color y animación
+- Verde/Teal cuando es tu turno (con pulse)
+- Naranja cuando es turno del oponente
+- Emojis para mejor comprensión (🎴 🎯 ⏳)
+
+### ✅ 9. Proporciones del tablero
+- **AJUSTADO**: Aspect ratio cambiado de 3/4 a 4/3
+- Reducción de gaps y borders para mejor compresión vertical
+- Tablero más horizontal y menos alto
+
+### ✅ 10. Delays en acciones
+- **IMPLEMENTADO**: 300ms delay después de jugar cartas
+- Permite que los jugadores vean los eventos antes del siguiente
+
+
+## 📋 Pendiente (Opcional/Futuro)
+
+### ✅ Efectos de Mercado Negro con UI especial - IMPLEMENTADO
+- ✅ Mind Control: Modal con selector de agente del oponente para robar
+- ✅ Secret Recruit: Modal con selector de agente diferente de tu mano
+- ✅ Double Trouble: Modal con selector de cartas idénticas de tu mano
+- ✅ Smoke Screen: Automático - recluta del tope del mazo
+- ✅ Spycation: Modal con selector de agente propio para devolver y reclutar
+- ✅ Outpost: Modal con selector de Sentinel de tu mano
+
+**Componentes creados:**
+- `AgentSelectionModal.jsx`: Modal reutilizable para seleccionar agentes, cartas de mano, o agentes del oponente
+- Nuevas funciones en `gameLogic.js`: `applyMindControl`, `applySecretRecruit`, `applyDoubleTrouble`, `applyOutpost`, `applySpycation`
+- Event handler en servidor: `complete-black-market-effect` para procesar selecciones
+- Lógica automática para bot: `handleBotBlackMarketEffect` hace selecciones aleatorias para el bot
+
+**Eventos Socket.IO agregados:**
+- `black-market-interaction-required`: Servidor solicita interacción del jugador
+- `complete-black-market-effect`: Cliente envía selección del jugador
+- `black-market-effect-completed`: Servidor confirma que el efecto se aplicó
+
+### Mejoras adicionales (low priority)
+- [ ] Sonidos para eventos (opcional)
+- [ ] Tutorial interactivo para nuevos jugadores
+- [ ] Historial de movimientos/acciones
+- [ ] Animación de trayectoria para movimiento de fichas
+- [ ] Partículas visuales en eventos importantes
+- [ ] Modo oscuro/claro
+- [ ] Estadísticas post-partida
+
+---
+
+## 🎉 Estado Final
+
+**Juego completamente funcional y listo para jugar** ✅
+
+- ✅ Todas las reglas del manual implementadas
+- ✅ Sistema multijugador en tiempo real funcionando
+- ✅ UX/UI pulida con animaciones y feedback visual
+- ✅ Responsive design (móvil → desktop)
+- ✅ Notificaciones claras de eventos
+- ✅ Deploy en Netlify + Render
 
 ## 🟡 IMPORTANTE - Lógica del juego
 

@@ -15,6 +15,11 @@ import {
     applyBlackMarketEffect,
     checkPermanentEffects,
     checkBlackMarketWinConditions,
+    applyMindControl,
+    applySecretRecruit,
+    applyDoubleTrouble,
+    applyOutpost,
+    applySpycation,
 } from '../utils/gameLogic.js'
 import { START_POSITIONS } from '../utils/gameConstants.js'
 import BotPlayer from '../utils/botPlayer.js'
@@ -346,13 +351,16 @@ export function setupSocketHandlers(io) {
                 game.phase = 'recruiting'
                 await game.save()
 
-                // Notificar cartas jugadas
-                io.to(game.lobbyCode).emit('cards-played', {
-                    faceUp: game.playedCards.faceUp,
-                    faceDown: game.playedCards.faceDown,
-                })
+                // Pequeño delay para que se vea la acción
+                setTimeout(() => {
+                    // Notificar cartas jugadas
+                    io.to(game.lobbyCode).emit('cards-played', {
+                        faceUp: game.playedCards.faceUp,
+                        faceDown: game.playedCards.faceDown,
+                    })
 
-                io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
+                    io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
+                }, 300)
 
                 // Si el oponente es un bot, que reclute automáticamente
                 const opponent = game.players.find(p => p.id !== game.currentPlayer)
@@ -424,10 +432,32 @@ export function setupSocketHandlers(io) {
                             if (bmCard.type === 'permanent') {
                                 if (!opponent.blackMarketCards) opponent.blackMarketCards = []
                                 opponent.blackMarketCards.push(bmCard)
-                            } else {
-                                // Si es instantánea, aplicar efecto
+                                
+                                // Aplicar efecto automático
                                 const effect = applyBlackMarketEffect(bmCard, opponent, currentPlayer, game)
                                 console.log('Efecto aplicado:', effect)
+                            } else {
+                                // Si es instantánea, verificar si necesita interacción
+                                const effect = applyBlackMarketEffect(bmCard, opponent, currentPlayer, game)
+                                
+                                if (effect.needsInteraction) {
+                                    // Guardar estado pendiente para interacción futura
+                                    game.pendingBlackMarketEffect = {
+                                        card: bmCard,
+                                        playerId: opponent.id,
+                                        interactionType: effect.interactionType,
+                                    }
+                                    
+                                    // Emitir evento solicitando interacción
+                                    io.to(game.lobbyCode).emit('black-market-interaction-required', {
+                                        playerId: opponent.id,
+                                        card: bmCard,
+                                        interactionType: effect.interactionType,
+                                        message: effect.message,
+                                    })
+                                } else {
+                                    console.log('Efecto aplicado:', effect)
+                                }
                             }
 
                             // Reponer desde el mazo
@@ -450,9 +480,28 @@ export function setupSocketHandlers(io) {
                             if (bmCard.type === 'permanent') {
                                 if (!currentPlayer.blackMarketCards) currentPlayer.blackMarketCards = []
                                 currentPlayer.blackMarketCards.push(bmCard)
-                            } else {
+                                
                                 const effect = applyBlackMarketEffect(bmCard, currentPlayer, opponent, game)
                                 console.log('Efecto aplicado:', effect)
+                            } else {
+                                const effect = applyBlackMarketEffect(bmCard, currentPlayer, opponent, game)
+                                
+                                if (effect.needsInteraction) {
+                                    game.pendingBlackMarketEffect = {
+                                        card: bmCard,
+                                        playerId: currentPlayer.id,
+                                        interactionType: effect.interactionType,
+                                    }
+                                    
+                                    io.to(game.lobbyCode).emit('black-market-interaction-required', {
+                                        playerId: currentPlayer.id,
+                                        card: bmCard,
+                                        interactionType: effect.interactionType,
+                                        message: effect.message,
+                                    })
+                                } else {
+                                    console.log('Efecto aplicado:', effect)
+                                }
                             }
 
                             if (game.blackMarketDeck && game.blackMarketDeck.length > 0) {
@@ -636,6 +685,103 @@ export function setupSocketHandlers(io) {
             }
         })
 
+        // Completar efecto de Mercado Negro que requiere interacción
+        socket.on('complete-black-market-effect', async ({ gameId, selection }) => {
+            try {
+                const game = await Game.findById(gameId)
+                if (!game || !game.pendingBlackMarketEffect) {
+                    socket.emit('error', { message: 'No hay efecto pendiente' })
+                    return
+                }
+
+                const pending = game.pendingBlackMarketEffect
+                const player = game.players.find(p => p.id === pending.playerId)
+                const opponent = game.players.find(p => p.id !== pending.playerId)
+
+                if (!player) {
+                    socket.emit('error', { message: 'Jugador no encontrado' })
+                    return
+                }
+
+                let result = {}
+                
+                // Aplicar el efecto según el tipo de interacción
+                switch (pending.interactionType) {
+                    case 'steal-agent':
+                        // Mind Control
+                        result = applyMindControl(player, opponent, selection.agentName)
+                        break
+                        
+                    case 'recruit-different':
+                        // Secret Recruit
+                        result = applySecretRecruit(player, selection.card)
+                        break
+                        
+                    case 'recruit-from-hand':
+                        // Double Trouble
+                        result = applyDoubleTrouble(player, selection.card)
+                        break
+                        
+                    case 'recruit-sentinel':
+                        // Outpost
+                        result = applyOutpost(player)
+                        break
+                        
+                    case 'return-and-recruit':
+                        // Spycation
+                        result = applySpycation(player, selection.agentName)
+                        break
+                        
+                    default:
+                        result = { success: false, message: 'Tipo de interacción desconocido' }
+                }
+
+                if (!result.success) {
+                    socket.emit('error', { message: result.message })
+                    return
+                }
+
+                // Rellenar mano después del efecto
+                refillHand(player, game.agentDeck)
+
+                // Limpiar efecto pendiente
+                game.pendingBlackMarketEffect = undefined
+
+                await game.save()
+
+                // Emitir estado actualizado
+                io.to(game.lobbyCode).emit('game-state-updated', {
+                    gameState: {
+                        players: game.players.map(p => ({
+                            id: p.id,
+                            name: p.name,
+                            color: p.color,
+                            position: p.position,
+                            handCount: p.hand.length,
+                            recruitedAgents: Object.fromEntries(p.recruitedAgents),
+                            blackMarketCards: p.blackMarketCards || [],
+                            discardsRemaining: p.discardsRemaining,
+                        })),
+                        currentPlayer: game.currentPlayer,
+                        playedCards: game.playedCards,
+                        deckCount: game.agentDeck.length,
+                        blackMarketSupply: game.blackMarketSupply,
+                    },
+                })
+
+                // Notificar que el efecto se completó
+                io.to(game.lobbyCode).emit('black-market-effect-completed', {
+                    playerId: player.id,
+                    card: pending.card,
+                    result: result.message,
+                })
+
+            } catch (error) {
+                console.error('Error al completar efecto de Mercado Negro:', error)
+                socket.emit('error', { message: 'Error al aplicar el efecto' })
+            }
+        })
+
         // Desconexión
         socket.on('disconnect', () => {
             console.log(`❌ Cliente desconectado: ${socket.id}`)
@@ -653,6 +799,77 @@ export function setupSocketHandlers(io) {
             console.error('Error al limpiar juegos:', error)
         }
     }, 60 * 60 * 1000) // 1 hora
+}
+
+// Función helper para manejar efectos interactivos del Mercado Negro para el bot
+function handleBotBlackMarketEffect(bmCard, botPlayer, opponent, game) {
+    const effect  = applyBlackMarketEffect(bmCard, botPlayer, opponent, game)
+    
+    if (!effect.needsInteraction) {
+        return effect
+    }
+
+    // Bot hace selección automática según el tipo de interacción
+    let result = {}
+    
+    switch (effect.interactionType) {
+        case 'steal-agent':
+            // Mind Control - robar agente aleatorio del oponente
+            const opponentAgents = Array.from(opponent.recruitedAgents.keys())
+            if (opponentAgents.length > 0) {
+                const randomAgent = opponentAgents[Math.floor(Math.random() * opponentAgents.length)]
+                result = applyMindControl(botPlayer, opponent, randomAgent)
+            }
+            break
+            
+        case 'recruit-different':
+            // Secret Recruit - seleccionar carta diferente de mano
+            const differentCards = botPlayer.hand.filter(card => 
+                !botPlayer.recruitedAgents.has(card.name)
+            )
+            if (differentCards.length > 0) {
+                const randomCard = differentCards[Math.floor(Math.random() * differentCards.length)]
+                result = applySecretRecruit(botPlayer, randomCard)
+            }
+            break
+            
+        case 'recruit-from-hand':
+            // Double Trouble - usar carta con duplicados
+            const cardCounts = {}
+            botPlayer.hand.forEach(card => {
+                cardCounts[card.name] = (cardCounts[card.name] || 0) + 1
+            })
+            const duplicates = botPlayer.hand.filter(card => cardCounts[card.name] >= 2)
+            if (duplicates.length > 0) {
+                const randomDup = duplicates[Math.floor(Math.random() * duplicates.length)]
+                result = applyDoubleTrouble(botPlayer, randomDup)
+            }
+            break
+            
+        case 'recruit-sentinel':
+            // Outpost - reclutar Sentinel
+            result = applyOutpost(botPlayer)
+            break
+            
+        case 'return-and-recruit':
+            // Spycation - devolver agente aleatorio
+            const myAgents = Array.from(botPlayer.recruitedAgents.keys())
+            if (myAgents.length > 0) {
+                const randomMyAgent = myAgents[Math.floor(Math.random() * myAgents.length)]
+                result = applySpycation(botPlayer, randomMyAgent)
+            }
+            break
+            
+        default:
+            console.log('Tipo de interacción desconocido para bot')
+    }
+    
+    // Rellenar mano después del efecto
+    if (result.success) {
+        refillHand(botPlayer, game.agentDeck)
+    }
+    
+    return result
 }
 
 // Funciones auxiliares para el bot
@@ -762,8 +979,17 @@ async function handleBotRecruit(game, io) {
                         if (bmCard.type === 'permanent') {
                             if (!recruiter.blackMarketCards) recruiter.blackMarketCards = []
                             recruiter.blackMarketCards.push(bmCard)
+                            
+                            // Aplicar efecto automático de permanente
+                            const effect = applyBlackMarketEffect(bmCard, recruiter, currentPlayer, game)
+                            console.log('Bot - Efecto permanente:', effect)
                         } else {
-                            applyBlackMarketEffect(bmCard, recruiter, currentPlayer, game)
+                            // Si es bot, manejar interacciones automáticamente
+                            if (recruiter.isBot) {
+                                handleBotBlackMarketEffect(bmCard, recruiter, currentPlayer, game)
+                            } else {
+                                applyBlackMarketEffect(bmCard, recruiter, currentPlayer, game)
+                            }
                         }
                         if (game.blackMarketDeck && game.blackMarketDeck.length > 0) {
                             game.blackMarketSupply.push(game.blackMarketDeck.shift())
@@ -781,8 +1007,16 @@ async function handleBotRecruit(game, io) {
                         if (bmCard.type === 'permanent') {
                             if (!currentPlayer.blackMarketCards) currentPlayer.blackMarketCards = []
                             currentPlayer.blackMarketCards.push(bmCard)
+                            
+                            const effect = applyBlackMarketEffect(bmCard, currentPlayer, recruiter, game)
+                            console.log('Bot - Efecto permanente:', effect)
                         } else {
-                            applyBlackMarketEffect(bmCard, currentPlayer, recruiter, game)
+                            // Si es bot, manejar interacciones automáticamente
+                            if (currentPlayer.isBot) {
+                                handleBotBlackMarketEffect(bmCard, currentPlayer, recruiter, game)
+                            } else {
+                                applyBlackMarketEffect(bmCard, currentPlayer, recruiter, game)
+                            }
                         }
                         if (game.blackMarketDeck && game.blackMarketDeck.length > 0) {
                             game.blackMarketSupply.push(game.blackMarketDeck.shift())

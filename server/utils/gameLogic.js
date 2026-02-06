@@ -209,6 +209,33 @@ export function applyBlackMarketEffect(card, player, opponent, game) {
             // Permanente: Enforcer avanza 2 adicionales
             return { message: 'Watchtower Two activo', log: 'Enforcers +2' }
         },
+        // Cartas que requieren interacción del usuario
+        'Mind Control': () => {
+            return { needsInteraction: true, interactionType: 'steal-agent', message: 'Selecciona un agente del oponente para robar' }
+        },
+        'Secret Recruit': () => {
+            return { needsInteraction: true, interactionType: 'recruit-different', message: 'Selecciona un agente diferente de tu mano' }
+        },
+        'Double Trouble': () => {
+            return { needsInteraction: true, interactionType: 'recruit-from-hand', message: 'Revela 2 agentes idénticos de tu mano' }
+        },
+        'Outpost': () => {
+            return { needsInteraction: true, interactionType: 'recruit-sentinel', message: 'Recluta un Sentinel de tu mano' }
+        },
+        'Smoke Screen': () => {
+            // Recluta carta del tope del mazo (automático)
+            if (game.agentDeck.length > 0) {
+                const topCard = game.agentDeck.shift()
+                const agents = player.recruitedAgents.get(topCard.name) || []
+                agents.push(topCard)
+                player.recruitedAgents.set(topCard.name, agents)
+                return { message: `Reclutaste ${topCard.name} del mazo`, log: 'Smoke Screen usado', recruited: topCard }
+            }
+            return { message: 'Mazo vacío', log: 'Smoke Screen sin efecto' }
+        },
+        'Spycation': () => {
+            return { needsInteraction: true, interactionType: 'return-and-recruit', message: 'Devuelve un agente a tu mano para reclutarlo de nuevo' }
+        },
     }
 
     const effectFn = effects[card.name]
@@ -217,6 +244,109 @@ export function applyBlackMarketEffect(card, player, opponent, game) {
     }
 
     return { message: `Carta ${card.name} obtenida`, log: `${card.name} en juego` }
+}
+
+// Funciones para completar efectos interactivos del Mercado Negro
+
+// Mind Control: Robar un agente del oponente
+export function applyMindControl(player, opponent, agentName) {
+    const opponentAgents = opponent.recruitedAgents.get(agentName) || []
+    if (opponentAgents.length === 0) {
+        return { success: false, message: 'El oponente no tiene ese agente' }
+    }
+
+    // Remover uno del oponente
+    const stolenCard = opponentAgents.pop()
+    if (opponentAgents.length === 0) {
+        opponent.recruitedAgents.delete(agentName)
+    } else {
+        opponent.recruitedAgents.set(agentName, opponentAgents)
+    }
+
+    // Agregar a la mano del jugador
+    player.hand.push(stolenCard)
+
+    return { success: true, message: `Robaste ${agentName} del oponente`, stolenAgent: agentName }
+}
+
+// Secret Recruit: Reclutar agente diferente de la mano
+export function applySecretRecruit(player, selectedCard) {
+    const cardIndex = player.hand.findIndex(c => c.name === selectedCard.name)
+    if (cardIndex === -1) {
+        return { success: false, message: 'Carta no encontrada en la mano' }
+    }
+
+    // Verificar que sea diferente a los agentes en juego
+    if (player.recruitedAgents.has(selectedCard.name)) {
+        return { success: false, message: 'Ya tienes ese agente en juego' }
+    }
+
+    // Remover de la mano y reclutar
+    const card = player.hand.splice(cardIndex, 1)[0]
+    const agents = player.recruitedAgents.get(card.name) || []
+    agents.push(card)
+    player.recruitedAgents.set(card.name, agents)
+
+    return { success: true, message: `Reclutaste ${card.name} secretamente`, recruited: card }
+}
+
+// Double Trouble: Reclutar una carta idéntica de la mano
+export function applyDoubleTrouble(player, selectedCard) {
+    // Buscar 2 cartas con el mismo nombre en la mano
+    const matchingCards = player.hand.filter(c => c.name === selectedCard.name)
+    if (matchingCards.length < 2) {
+        return { success: false, message: 'Necesitas 2 cartas idénticas en la mano' }
+    }
+
+    // Remover una de la mano y reclutar
+    const cardIndex = player.hand.findIndex(c => c.name === selectedCard.name)
+    const card = player.hand.splice(cardIndex, 1)[0]
+    const agents = player.recruitedAgents.get(card.name) || []
+    agents.push(card)
+    player.recruitedAgents.set(card.name, agents)
+
+    return { success: true, message: `Reclutaste ${card.name} con Double Trouble`, recruited: card }
+}
+
+// Outpost: Reclutar Sentinel de la mano
+export function applyOutpost(player) {
+    const sentinelIndex = player.hand.findIndex(c => c.name === 'Sentinel')
+    if (sentinelIndex === -1) {
+        return { success: false, message: 'No tienes Sentinel en tu mano' }
+    }
+
+    const card = player.hand.splice(sentinelIndex, 1)[0]
+    const agents = player.recruitedAgents.get('Sentinel') || []
+    agents.push(card)
+    player.recruitedAgents.set('Sentinel', agents)
+
+    return { success: true, message: 'Reclutaste Sentinel con Outpost', recruited: card }
+}
+
+// Spycation: Devolver agente a la mano y reclutarlo de nuevo
+export function applySpycation(player, agentName) {
+    const agents = player.recruitedAgents.get(agentName) || []
+    if (agents.length === 0) {
+        return { success: false, message: 'No tienes ese agente en juego' }
+    }
+
+    // Remover el último agente de ese tipo
+    const returnedCard = agents.pop()
+    if (agents.length === 0) {
+        player.recruitedAgents.delete(agentName)
+    } else {
+        player.recruitedAgents.set(agentName, agents)
+    }
+
+    // Agregarlo a la mano
+    player.hand.push(returnedCard)
+
+    // Reclutarlo inmediatamente
+    const newAgents = player.recruitedAgents.get(agentName) || []
+    newAgents.push(returnedCard)
+    player.recruitedAgents.set(agentName, newAgents)
+
+    return { success: true, message: `Usaste Spycation en ${agentName}`, recruited: returnedCard }
 }
 
 // Verificar efectos permanentes activos
