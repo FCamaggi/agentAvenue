@@ -81,7 +81,8 @@ const GamePage = () => {
 
     socket.on('cards-played', (data) => {
       setPlayedCards({ faceUp: data.faceUp, faceDown: data.faceDown });
-      dispatch({ type: 'SET_PHASE', payload: 'recruiting' });
+      // NO cambiar la fase aquí - esperar a game-state-updated
+      // dispatch({ type: 'SET_PHASE', payload: 'recruiting' });
       
       if (!state.isMyTurn) {
         toast('🎴 Tu oponente jugó sus cartas', {
@@ -95,7 +96,8 @@ const GamePage = () => {
       console.log('Agente reclutado:', data);
       setPlayedCards({ faceUp: null, faceDown: null });
       setRecruitChoice(null);
-      dispatch({ type: 'SET_PHASE', payload: 'playing' });
+      // NO cambiar la fase aquí - esperar a game-state-updated
+      // dispatch({ type: 'SET_PHASE', payload: 'playing' });
       
       // Notificar reclutamiento
       const currentPlayer = state.gameState?.players?.find(p => p.id === state.gameState.currentPlayer);

@@ -213,7 +213,9 @@ export function setupSocketHandlers(io) {
 
                 game.deck = deck
                 game.status = 'active'
-                game.currentPlayer = game.players[0].id
+                // Seleccionar jugador inicial aleatoriamente
+                const randomIndex = Math.floor(Math.random() * game.players.length)
+                game.currentPlayer = game.players[randomIndex].id
                 game.phase = 'playing'
 
                 // Si es modo avanzado, crear mazo de Mercado Negro
