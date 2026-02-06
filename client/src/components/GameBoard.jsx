@@ -180,13 +180,14 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
   };
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto aspect-[5/3] bg-gradient-to-br from-teal-200/40 to-cyan-300/30 rounded-3xl p-1 sm:p-2 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
+    <div className="relative w-full max-w-3xl mx-auto aspect-[6/3] bg-gradient-to-br from-teal-200/40 to-cyan-300/30 rounded-3xl p-1 sm:p-2 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
       {/* Imagen de fondo */}
-      <div className="absolute inset-0 z-0 p-[2%]">
+      <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
         <img
           src={getBackgroundImage()}
           alt="Board Background"
-          className="w-full h-full object-cover scale-105 drop-shadow-lg"
+          className="w-full h-full object-cover scale-125 drop-shadow-lg"
+          style={{ objectPosition: 'center center' }}
           onError={(e) => {
             e.target.style.display = 'none';
           }}
@@ -194,7 +195,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
       </div>
 
       {/* Grid de casillas */}
-      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-1 p-[1%]">{
+      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-1 p-[2%]">{
         {tiles.map((tile) => {
           const { bgColor, textColor, icon, rotation, isPath } =
             getTileConfig(tile);

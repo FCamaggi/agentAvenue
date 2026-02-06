@@ -269,6 +269,15 @@ export function setupSocketHandlers(io) {
                 }
 
                 const player = game.players.find(p => p.id === socket.playerId)
+                
+                // Debug logs
+                console.log('🎮 PLAY-CARDS VALIDATION:')
+                console.log('  Player ID:', socket.playerId)
+                console.log('  Current Player:', game.currentPlayer)
+                console.log('  Phase:', game.phase)
+                console.log('  Is Right Player?', game.currentPlayer === socket.playerId)
+                console.log('  Is Right Phase?', game.phase === 'playing')
+                
                 if (!player || game.currentPlayer !== socket.playerId) {
                     return socket.emit('error', { message: 'No es tu turno' })
                 }
@@ -556,6 +565,11 @@ export function setupSocketHandlers(io) {
                     game.currentPlayer = getNextPlayer(game.players, game.currentPlayer)
                     game.turnNumber += 1
                     game.phase = 'playing'
+
+                    console.log('🔄 AFTER RECRUIT - TURN CHANGE:')
+                    console.log('  New Current Player:', game.currentPlayer)
+                    console.log('  New Phase:', game.phase)
+                    console.log('  Turn Number:', game.turnNumber)
 
                     await game.save()
 
