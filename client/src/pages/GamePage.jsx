@@ -349,7 +349,7 @@ const GamePage = () => {
                     >
                       <Card
                         agent={playedCards.faceDown}
-                        faceUp={!state.isMyTurn || state.phase === 'finished'}
+                        faceUp={state.isMyTurn || state.phase === 'finished'}
                         size="lg"
                         selected={recruitChoice === 'faceDown'}
                       />

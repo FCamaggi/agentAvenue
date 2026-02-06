@@ -32,7 +32,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
     {
       id: 1,
       type: 'corner',
-      content: 'burglar',
+      content: isAdvancedMode ? 'burglar' : 'empty',
       side: 'top-left',
       grid: { col: 1, row: 1 },
     },
@@ -53,7 +53,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
     {
       id: 4,
       type: 'corner',
-      content: 'burglar',
+      content: isAdvancedMode ? 'burglar' : 'empty',
       side: 'top-right',
       grid: { col: 4, row: 1 },
     },
@@ -85,7 +85,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
     {
       id: 8,
       type: 'corner',
-      content: 'burglar',
+      content: isAdvancedMode ? 'burglar' : 'empty',
       side: 'bottom-right',
       grid: { col: 4, row: 5 },
     },
@@ -106,7 +106,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
     {
       id: 11,
       type: 'corner',
-      content: 'burglar',
+      content: isAdvancedMode ? 'burglar' : 'empty',
       side: 'bottom-left',
       grid: { col: 1, row: 5 },
     },

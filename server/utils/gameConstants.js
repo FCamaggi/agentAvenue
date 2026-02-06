@@ -1,16 +1,14 @@
 // Definición de las cartas de agente
-export const AGENT_CARDS = {
-    simple: [
-        { name: 'Double Agent', movement: [2, 0, -2], count: 6 },
-        { name: 'Enforcer', movement: [1, 2, 3], count: 6 },
-        { name: 'Codebreaker', movement: [1, 1, 3], count: 6 }, // Victoria con 3
-    ],
-    advanced: [
-        { name: 'Saboteur', movement: [-1, -2, -3], count: 6 }, // Derrota con 3
-        { name: 'Daredevil', movement: [3, 2, 1], count: 6 }, // Derrota con 3
-        { name: 'Sentinel', movement: [0, 1, 2], count: 6 },
-    ],
-}
+// Todas las cartas están disponibles en ambos modos (simple y avanzado)
+// Lo único que cambia en modo avanzado es el Mercado Negro
+export const AGENT_CARDS = [
+    { name: 'Codebreaker', movement: [0, 0, 'win'], count: 6 }, // 3ra carta = victoria
+    { name: 'Daredevil', movement: [2, 3, 'lose'], count: 6 }, // 3ra carta = derrota
+    { name: 'Double Agent', movement: [-1, 6, -1], count: 6 },
+    { name: 'Enforcer', movement: [1, 2, 3], count: 6 },
+    { name: 'Saboteur', movement: [-1, -1, -2], count: 6 },
+    { name: 'Sentinel', movement: [0, 2, 6], count: 6 },
+]
 
 // Cartas del Mercado Negro
 export const BLACK_MARKET_CARDS = [

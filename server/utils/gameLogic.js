@@ -1,11 +1,13 @@
 import { AGENT_CARDS, BLACK_MARKET_CARDS, PLAYER_COLORS, START_POSITIONS, TOTAL_TILES, BOARD_POSITIONS } from './gameConstants.js'
 
 // Crear y barajar el mazo de agentes
+// Todas las cartas están disponibles en cualquier modo
+// El modo solo afecta al Mercado Negro, no a las cartas de agentes
 export function createAgentDeck(gameMode) {
     const deck = []
 
-    // Agregar cartas del modo simple
-    AGENT_CARDS.simple.forEach(card => {
+    // Agregar todas las cartas de agentes (mismo mazo para todos los modos)
+    AGENT_CARDS.forEach(card => {
         for (let i = 0; i < card.count; i++) {
             deck.push({
                 name: card.name,
@@ -13,18 +15,6 @@ export function createAgentDeck(gameMode) {
             })
         }
     })
-
-    // Agregar cartas del modo avanzado
-    if (gameMode === 'advanced' || gameMode === 'team') {
-        AGENT_CARDS.advanced.forEach(card => {
-            for (let i = 0; i < card.count; i++) {
-                deck.push({
-                    name: card.name,
-                    movement: card.movement,
-                })
-            }
-        })
-    }
 
     return shuffleDeck(deck)
 }
@@ -55,7 +45,14 @@ export function assignPlayerColor(existingPlayers) {
 export function calculateMovement(agent, count) {
     // count: número de agentes del mismo tipo que tiene el jugador
     const index = Math.min(count, 3) - 1 // 0, 1, o 2
-    return agent.movement[index]
+    const movement = agent.movement[index]
+    
+    // Si el movimiento es 'win' o 'lose', retornar 0 (no se mueve, solo se verifica condición)
+    if (movement === 'win' || movement === 'lose') {
+        return 0
+    }
+    
+    return movement
 }
 
 // Mover peón en el tablero
@@ -106,28 +103,17 @@ export function checkWinConditions(player, opponent, isPlayerTurn) {
     const codebreakerCount = (playerAgents.get('Codebreaker') || []).length
     const daredevilCount = (playerAgents.get('Daredevil') || []).length
 
-    // Victoria: 3 Codebreakers
+    // Victoria: 3 Codebreakers (movimiento = 'win')
     if (codebreakerCount >= 3) {
         conditions.won = true
         conditions.reason = 'three_codebreakers'
         return conditions
     }
 
-    // Derrota: 3 Daredevils (a menos que tenga Leader of the Pack)
+    // Derrota: 3 Daredevils (movimiento = 'lose')
     if (daredevilCount >= 3) {
-        // Verificar si tiene Leader of the Pack
-        const hasLeaderOfPack = (player.blackMarketCards || []).some(
-            card => card.name === 'Leader of the Pack'
-        )
-
-        if (hasLeaderOfPack) {
-            // Con Leader of the Pack, 3 Saboteurs es victoria
-            conditions.won = true
-            conditions.reason = 'leader_of_pack'
-        } else {
-            conditions.lost = true
-            conditions.reason = 'three_daredevils'
-        }
+        conditions.lost = true
+        conditions.reason = 'three_daredevils'
         return conditions
     }
 

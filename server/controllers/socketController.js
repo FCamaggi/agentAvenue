@@ -508,18 +508,20 @@ export function setupSocketHandlers(io) {
 
                     await game.save()
 
+                    // Primero emitir el estado actualizado
+                    io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
+
+                    // Luego notificar el reclutamiento
                     io.to(game.lobbyCode).emit('agent-recruited', {
                         opponentAgent: opponentCard.name,
                         playerAgent: playerCard.name,
                     })
-                }
 
-                io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
-
-                // Si el siguiente jugador es un bot, que juegue
-                const nextPlayer = game.players.find(p => p.id === game.currentPlayer)
-                if (nextPlayer && nextPlayer.isBot) {
-                    handleBotTurn(game, io)
+                    // Si el siguiente jugador es un bot, que juegue
+                    const nextPlayer = game.players.find(p => p.id === game.currentPlayer)
+                    if (nextPlayer && nextPlayer.isBot) {
+                        handleBotTurn(game, io)
+                    }
                 }
             } catch (error) {
                 console.error('Error al reclutar agente:', error)
