@@ -235,7 +235,9 @@ const GamePage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Agent Avenue</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
+              Agent Avenue
+            </h1>
             <p className="text-slate-400 text-xs sm:text-sm">
               Modo:{' '}
               {state.gameMode === 'simple'
@@ -272,7 +274,9 @@ const GamePage = () => {
               {state.isMyTurn && (
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  <span className="text-green-400 text-xs sm:text-sm">Tu turno</span>
+                  <span className="text-green-400 text-xs sm:text-sm">
+                    Tu turno
+                  </span>
                 </div>
               )}
             </div>
@@ -283,7 +287,7 @@ const GamePage = () => {
                   Turno {state.gameState.turnNumber || 1}
                 </div>
               )}
-              
+
               {/* Indicador de descartes */}
               {state.isMyTurn && state.phase === 'playing' && (
                 <div className="text-xs sm:text-sm text-slate-300 bg-slate-700 px-2 sm:px-3 py-1 rounded-full">
@@ -372,7 +376,9 @@ const GamePage = () => {
                           {card.name}
                         </div>
                         <div className="text-yellow-400 text-[10px] sm:text-xs">
-                          {card.type === 'instant' ? '⚡ Instant' : '♾️ Permanent'}
+                          {card.type === 'instant'
+                            ? '⚡ Instant'
+                            : '♾️ Permanent'}
                         </div>
                       </div>
                     </div>
@@ -426,14 +432,15 @@ const GamePage = () => {
                 ▶️ Jugar Cartas Seleccionadas
               </button>
 
-              {state.discardsRemaining > 0 && selectedHandCards.length === 1 && (
-                <button
-                  onClick={() => handleDiscardCard(selectedHandCards[0])}
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-xl transition-all shadow-lg text-sm sm:text-base"
-                >
-                  🔄 Descartar y Robar ({state.discardsRemaining} restantes)
-                </button>
-              )}
+              {state.discardsRemaining > 0 &&
+                selectedHandCards.length === 1 && (
+                  <button
+                    onClick={() => handleDiscardCard(selectedHandCards[0])}
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-xl transition-all shadow-lg text-sm sm:text-base"
+                  >
+                    🔄 Descartar y Robar ({state.discardsRemaining} restantes)
+                  </button>
+                )}
             </div>
           )}
         </div>
@@ -494,7 +501,8 @@ const GamePage = () => {
                 <li>Ambos mueven sus peones según el agente reclutado</li>
               </ol>
               <p>
-                <strong>Movimiento:</strong> Según cuántos agentes del mismo tipo tengas:
+                <strong>Movimiento:</strong> Según cuántos agentes del mismo
+                tipo tengas:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>1 agente: usa el 1er símbolo (arriba)</li>
@@ -502,7 +510,8 @@ const GamePage = () => {
                 <li>3+ agentes: usa el 3er símbolo (abajo)</li>
               </ul>
               <p>
-                <strong>Descarte:</strong> Puedes descartar una carta y robar una nueva hasta 4 veces por partida.
+                <strong>Descarte:</strong> Puedes descartar una carta y robar
+                una nueva hasta 4 veces por partida.
               </p>
               <p>
                 <strong>Victoria:</strong>
@@ -523,7 +532,8 @@ const GamePage = () => {
                     <strong>Modo Avanzado - Mercado Negro:</strong>
                   </p>
                   <p>
-                    Al caer EXACTAMENTE en una casilla del Mercado Negro (esquinas), tomas una carta especial con efectos únicos.
+                    Al caer EXACTAMENTE en una casilla del Mercado Negro
+                    (esquinas), tomas una carta especial con efectos únicos.
                   </p>
                 </>
               )}

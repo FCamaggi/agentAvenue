@@ -269,7 +269,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
                                     : 'bg-yellow-600'
                             }
                             ${
-                              isMyPawn 
+                              isMyPawn
                                 ? 'border-4 border-white ring-2 ring-yellow-400 animate-pulse'
                                 : 'border-2 border-white'
                             }

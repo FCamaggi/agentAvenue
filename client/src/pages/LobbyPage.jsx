@@ -18,8 +18,12 @@ const LobbyPage = () => {
   useEffect(() => {
     if (!socket) return;
 
+    // Solicitar estado actual del lobby al montar
+    socket.emit('get-lobby-state', { lobbyCode });
+
     // Escuchar actualizaciones del lobby
     socket.on('lobby-updated', (data) => {
+      console.log('Lobby actualizado:', data);
       setPlayers(data.players);
       setIsHost(data.hostId === state.playerId);
 

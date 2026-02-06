@@ -232,9 +232,7 @@ const HomePage = () => {
 
                 <button
                   onClick={
-                    action === 'create'
-                      ? handleCreateLobby
-                      : handleJoinLobby
+                    action === 'create' ? handleCreateLobby : handleJoinLobby
                   }
                   disabled={loading || !connected}
                   className="w-full bg-game-teal hover:bg-teal-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold py-3 sm:py-4 px-6 rounded-xl transition-all shadow-lg text-sm sm:text-base"

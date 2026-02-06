@@ -79,6 +79,9 @@ export function setupSocketHandlers(io) {
                 socket.playerId = playerId
                 socket.lobbyCode = lobbyCode
 
+                console.log(`🎮 Lobby creado: ${lobbyCode} por ${playerName} (${playerId})`)
+                console.log(`📊 Jugadores iniciales: ${game.players.length}`)
+
                 callback({
                     success: true,
                     lobbyCode,
@@ -88,14 +91,34 @@ export function setupSocketHandlers(io) {
                     withBot,
                 })
 
-                // Notificar actualización del lobby
-                io.to(lobbyCode).emit('lobby-updated', {
-                    players: game.players,
-                    hostId: game.players[0].id,
-                })
+                // Pequeño delay para asegurar que el cliente esté listo
+                setTimeout(() => {
+                    // Notificar actualización del lobby
+                    console.log(`📢 Emitiendo lobby-updated inicial a ${lobbyCode} con ${game.players.length} jugadores`)
+                    io.to(lobbyCode).emit('lobby-updated', {
+                        players: game.players,
+                        hostId: game.players[0].id,
+                    })
+                }, 100)
             } catch (error) {
                 console.error('Error al crear lobby:', error)
                 callback({ error: 'Error al crear la sala' })
+            }
+        })
+
+        // Obtener estado actual del lobby
+        socket.on('get-lobby-state', async ({ lobbyCode }) => {
+            try {
+                const game = await Game.findOne({ lobbyCode })
+                if (game) {
+                    console.log(`📋 Enviando estado del lobby ${lobbyCode} a cliente: ${game.players.length} jugadores`)
+                    socket.emit('lobby-updated', {
+                        players: game.players,
+                        hostId: game.players.find(p => p.isHost)?.id,
+                    })
+                }
+            } catch (error) {
+                console.error('Error al obtener estado del lobby:', error)
             }
         })
 
@@ -135,6 +158,9 @@ export function setupSocketHandlers(io) {
                 socket.playerId = playerId
                 socket.lobbyCode = lobbyCode
 
+                console.log(`👤 Jugador ${playerName} (${playerId}) se unió al lobby ${lobbyCode}`)
+                console.log(`📊 Total de jugadores en lobby ${lobbyCode}: ${game.players.length}`)
+
                 callback({
                     success: true,
                     lobbyCode,
@@ -143,11 +169,15 @@ export function setupSocketHandlers(io) {
                     gameMode: game.gameMode,
                 })
 
-                // Notificar a todos los jugadores
-                io.to(lobbyCode).emit('lobby-updated', {
-                    players: game.players,
-                    hostId: game.players.find(p => p.isHost).id,
-                })
+                // Pequeño delay para asegurar que el cliente esté listo
+                setTimeout(() => {
+                    // Notificar a todos los jugadores
+                    console.log(`📢 Emitiendo lobby-updated a ${lobbyCode} con ${game.players.length} jugadores`)
+                    io.to(lobbyCode).emit('lobby-updated', {
+                        players: game.players,
+                        hostId: game.players.find(p => p.isHost).id,
+                    })
+                }, 100)
             } catch (error) {
                 console.error('Error al unirse al lobby:', error)
                 callback({ error: 'Error al unirse a la sala' })

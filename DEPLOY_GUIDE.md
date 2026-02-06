@@ -36,6 +36,7 @@ CLIENT_URL=https://tu-app.netlify.app
 ```
 
 **Importante**: Reemplaza los valores:
+
 - `MONGODB_URI`: Tu conexión de MongoDB Atlas
 - `CLIENT_URL`: La URL que obtendrás de Netlify (puedes actualizarla después)
 
@@ -50,6 +51,7 @@ CLIENT_URL=https://tu-app.netlify.app
 Visita: `https://tu-servidor.onrender.com/health`
 
 Deberías ver:
+
 ```json
 {
   "status": "ok",
@@ -129,6 +131,7 @@ Esto habilitará CORS para tu dominio de Netlify.
 **Causa**: El servidor no está corriendo o CORS mal configurado
 
 **Solución**:
+
 1. Verifica que el servidor esté activo en Render
 2. Confirma que `VITE_SOCKET_URL` apunta al servidor correcto
 3. Verifica que `CLIENT_URL` en Render coincida con tu URL de Netlify
@@ -138,6 +141,7 @@ Esto habilitará CORS para tu dominio de Netlify.
 **Causa**: MONGODB_URI incorrecta o IP no whitelisted
 
 **Solución**:
+
 1. Ve a MongoDB Atlas → Network Access
 2. Agrega `0.0.0.0/0` a la lista de IPs permitidas
 3. Verifica que tu string de conexión sea correcta
@@ -153,10 +157,12 @@ Esto habilitará CORS para tu dominio de Netlify.
 **Problema**: En el plan Free, Render "duerme" el servicio tras 15 minutos de inactividad
 
 **Solución temporal**:
+
 - El servidor tarda ~30 segundos en despertar al recibir la primera petición
 - Considera usar un servicio de "ping" para mantenerlo activo
 
 **Solución permanente**:
+
 - Upgrade a plan pagado ($7/mes)
 
 ## 📱 Configuración de Dominio Personalizado (Opcional)
@@ -205,12 +211,14 @@ Esto habilitará CORS para tu dominio de Netlify.
 ## 🎉 ¡Listo!
 
 Tu aplicación está desplegada y lista para jugar en:
+
 - **Frontend**: https://tu-sitio.netlify.app
 - **Backend**: https://tu-servidor.onrender.com
 
 ## 📞 Soporte
 
 Si hay problemas:
+
 1. Revisa los logs en Render y Netlify
 2. Verifica las variables de entorno
 3. Comprueba la conexión a MongoDB
