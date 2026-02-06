@@ -70,7 +70,7 @@ export function movePawn(currentPosition, movement) {
 }
 
 // Verificar si un jugador capturó al oponente
-export function checkCapture(playerPos, opponentPos, isPlayerTurn) {
+export function checkCapture(playerPos, opponentPos, isPlayerTurn, playerStartPos, opponentStartPos) {
     // Solo el jugador activo (en su turno) puede capturar
     // Según el manual: "Si tu peón supera la posición de su peón, cuenta como captura"
     
@@ -83,17 +83,36 @@ export function checkCapture(playerPos, opponentPos, isPlayerTurn) {
         return true
     }
 
-    // Caso 2: Calcular si el jugador pasó al oponente en sentido horario
-    // Distancia en sentido horario desde player hasta opponent
-    let distanceToOpponent = opponentPos - playerPos
-    if (distanceToOpponent < 0) {
-        distanceToOpponent += TOTAL_TILES
+    // Caso 2: Calcular la distancia REAL recorrida por cada jugador desde su inicio
+    // Importante: distinguir entre avances y retrocesos
+    // En un tablero circular, usar módulo da valores 0-13, pero no distingue
+    // entre avanzar 2 o retroceder 12 (ambos dan 2)
+    
+    // Calcular distancia considerando circularidad
+    let playerTraveled = (playerPos - playerStartPos + TOTAL_TILES) % TOTAL_TILES
+    let opponentTraveled = (opponentPos - opponentStartPos + TOTAL_TILES) % TOTAL_TILES
+    
+    // Ajustar para retrocesos: si traveled > 7, es más probable que sea retroceso
+    // Convertir a negativo para reflejar que retrocedió
+    // Ejemplo: si "avanzó" 12 casillas, realmente retrocedió 2 (12 - 14 = -2)
+    if (playerTraveled > TOTAL_TILES / 2) {
+        playerTraveled = playerTraveled - TOTAL_TILES
     }
-
-    // Si la distancia es mayor a la mitad del tablero, significa que el jugador
-    // pasó al oponente (está "detrás" en términos de persecución circular)
-    // Ejemplo: Green en 7, Blue en 6 → distancia = 6-7 = -1, normalizado = 13 > 7 = captura
-    return distanceToOpponent > TOTAL_TILES / 2
+    if (opponentTraveled > TOTAL_TILES / 2) {
+        opponentTraveled = opponentTraveled - TOTAL_TILES
+    }
+    
+    // Calcular diferencia de avance real (considerando retrocesos como negativos)
+    // Ejemplo: Player avanzó 7, Opponent retrocedió 2 (-2) → 7 - (-2) = 9 >= 7 ✓
+    const travelDifference = playerTraveled - opponentTraveled
+    
+    console.log('🎯 CAPTURA CHECK:')
+    console.log('  Player pos:', playerPos, 'Start:', playerStartPos, 'Traveled:', playerTraveled)
+    console.log('  Opponent pos:', opponentPos, 'Start:', opponentStartPos, 'Traveled:', opponentTraveled)
+    console.log('  Difference:', travelDifference, 'Need:', TOTAL_TILES / 2)
+    console.log('  Capture?:', travelDifference >= TOTAL_TILES / 2)
+    
+    return travelDifference >= TOTAL_TILES / 2
 }
 
 // Verificar condiciones de victoria/derrota
@@ -124,7 +143,10 @@ export function checkWinConditions(player, opponent, isPlayerTurn) {
     }
 
     // Victoria: Captura del oponente
-    if (checkCapture(player.position, opponent.position, isPlayerTurn)) {
+    const playerStartPos = START_POSITIONS[player.color]
+    const opponentStartPos = START_POSITIONS[opponent.color]
+    
+    if (checkCapture(player.position, opponent.position, isPlayerTurn, playerStartPos, opponentStartPos)) {
         conditions.won = true
         conditions.reason = 'captured_opponent'
         return conditions
