@@ -218,6 +218,17 @@ export function setupSocketHandlers(io) {
                 game.currentPlayer = game.players[randomIndex].id
                 game.phase = 'playing'
 
+                console.log('🎲 INICIO DE JUEGO:')
+                console.log('  Total jugadores:', game.players.length)
+                console.log('  Índice aleatorio seleccionado:', randomIndex)
+                console.log('  Jugador inicial:', game.currentPlayer)
+                console.log('  Nombre:', game.players[randomIndex].name)
+                console.log('  Es host?:', game.players[randomIndex].isHost)
+                console.log('  Lista de jugadores:')
+                game.players.forEach((p, i) => {
+                    console.log(`    ${i}: ${p.name} (${p.id}) - Host: ${p.isHost}`)
+                })
+
                 // Si es modo avanzado, crear mazo de Mercado Negro
                 if (game.gameMode === 'advanced') {
                     const blackMarketDeck = createBlackMarketDeck()
@@ -237,8 +248,9 @@ export function setupSocketHandlers(io) {
                     gameState: game,
                 })
 
-                // Si el primer jugador es un bot, que juegue automáticamente
-                if (game.players[0].isBot) {
+                // Si el jugador seleccionado aleatoriamente es un bot, que juegue automáticamente
+                const currentPlayer = game.players.find(p => p.id === game.currentPlayer)
+                if (currentPlayer && currentPlayer.isBot) {
                     handleBotTurn(game, io)
                 }
             } catch (error) {

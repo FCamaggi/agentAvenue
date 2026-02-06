@@ -43,9 +43,15 @@ const GamePage = () => {
 
     // Escuchar actualizaciones del juego
     socket.on('game-state-updated', (data) => {
+      console.log('📡 GAME STATE UPDATED:');
+      console.log('  Current Player:', data.gameState.currentPlayer);
+      console.log('  My Player ID:', state.playerId);
+      console.log('  Phase:', data.gameState.phase);
+      console.log('  Is My Turn?:', data.gameState.currentPlayer === state.playerId);
+      
       dispatch({ type: 'UPDATE_GAME_STATE', payload: data.gameState });
 
-      // Actualizar fase del juego
+      // Actualizar fase del juego (fuente autoritativa)
       if (data.gameState.phase) {
         dispatch({ type: 'SET_PHASE', payload: data.gameState.phase });
       }
@@ -60,9 +66,11 @@ const GamePage = () => {
           type: 'UPDATE_RECRUITED',
           payload: myPlayer.recruitedAgents,
         });
+        const isMyTurn = data.gameState.currentPlayer === state.playerId;
+        console.log('  Setting isMyTurn to:', isMyTurn);
         dispatch({
           type: 'SET_TURN',
-          payload: data.gameState.currentPlayer === state.playerId,
+          payload: isMyTurn,
         });
         // Actualizar descartes restantes
         if (myPlayer.discardsRemaining !== undefined) {
@@ -81,8 +89,8 @@ const GamePage = () => {
 
     socket.on('cards-played', (data) => {
       setPlayedCards({ faceUp: data.faceUp, faceDown: data.faceDown });
-      // NO cambiar la fase aquí - esperar a game-state-updated
-      // dispatch({ type: 'SET_PHASE', payload: 'recruiting' });
+      // Actualización optimista de fase (game-state-updated lo confirmará)
+      dispatch({ type: 'SET_PHASE', payload: 'recruiting' });
       
       if (!state.isMyTurn) {
         toast('🎴 Tu oponente jugó sus cartas', {
