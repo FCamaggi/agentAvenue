@@ -556,7 +556,9 @@ export function setupSocketHandlers(io) {
                 game.playedCards = { faceUp: null, faceDown: null }
 
                 // Verificar condiciones de victoria (incluyendo Mercado Negro)
-                let opponentWin = checkWinConditions(opponent, currentPlayer, false)
+                // IMPORTANTE: Ambos jugadores se movieron, así que ambos pueden capturar
+                // Verificamos a ambos con isPlayerTurn=true para permitir la captura
+                let opponentWin = checkWinConditions(opponent, currentPlayer, true)
                 let playerWin = checkWinConditions(currentPlayer, opponent, true)
 
                 // Verificar condiciones especiales de Mercado Negro
