@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useSocket } from '../contexts/SocketContext';
 import { useGame } from '../contexts/GameContext';
 import GameBoard from '../components/GameBoard';
 import PlayerHand from '../components/PlayerHand';
 import RecruitedAgents from '../components/RecruitedAgents';
 import Card from '../components/Card';
+import AgentSelectionModal from '../components/AgentSelectionModal';
 import { LogOut, Info } from 'lucide-react';
 
 const GamePage = () => {
@@ -24,6 +26,14 @@ const GamePage = () => {
   const [cardToDiscard, setCardToDiscard] = useState(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [blackMarketSupply, setBlackMarketSupply] = useState([]);
+  
+  // Estado para interacciones del Mercado Negro
+  const [blackMarketInteraction, setBlackMarketInteraction] = useState({
+    isOpen: false,
+    card: null,
+    interactionType: null,
+    message: '',
+  });
 
   useEffect(() => {
     if (!socket) return;
@@ -72,6 +82,13 @@ const GamePage = () => {
     socket.on('cards-played', (data) => {
       setPlayedCards({ faceUp: data.faceUp, faceDown: data.faceDown });
       dispatch({ type: 'SET_PHASE', payload: 'recruiting' });
+      
+      if (!state.isMyTurn) {
+        toast('🎴 Tu oponente jugó sus cartas', {
+          icon: '👀',
+          duration: 2000,
+        });
+      }
     });
 
     socket.on('agent-recruited', (data) => {
@@ -79,18 +96,46 @@ const GamePage = () => {
       setPlayedCards({ faceUp: null, faceDown: null });
       setRecruitChoice(null);
       dispatch({ type: 'SET_PHASE', payload: 'playing' });
+      
+      // Notificar reclutamiento
+      const currentPlayer = state.gameState?.players?.find(p => p.id === state.gameState.currentPlayer);
+      if (currentPlayer && currentPlayer.id === state.playerId) {
+        toast.success('🎯 Es tu turno para jugar', {
+          duration: 2500,
+        });
+      }
     });
 
     socket.on('game-over', (data) => {
       dispatch({ type: 'GAME_OVER', payload: data.winner });
+      
+      if (data.winner === state.playerId) {
+        toast.success('🎉 ¡Ganaste la partida!', {
+          duration: 5000,
+          style: {
+            background: '#10b981',
+            color: '#fff',
+          },
+        });
+      } else {
+        toast.error('😔 Perdiste esta vez', {
+          duration: 5000,
+        });
+      }
     });
 
     socket.on('player-disconnected', (data) => {
       console.log('Jugador desconectado:', data);
+      toast.error('⚠️ Un jugador se desconectó', {
+        duration: 3000,
+      });
     });
 
     socket.on('error', (error) => {
       dispatch({ type: 'SET_ERROR', payload: error.message });
+      toast.error(error.message, {
+        duration: 3000,
+      });
       setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 5000);
     });
 
@@ -100,13 +145,49 @@ const GamePage = () => {
         type: 'SET_DISCARDS_REMAINING',
         payload: data.discardsRemaining,
       });
+      toast('🗑️ Carta descartada', {
+        icon: '♻️',
+        duration: 1500,
+      });
     });
 
     socket.on('black-market-taken', (data) => {
       console.log('Carta del Mercado Negro tomada:', data);
       if (data.playerId === state.playerId) {
         dispatch({ type: 'ADD_BLACK_MARKET_CARD', payload: data.card });
+        toast.success(`🏪 Obtuviste: ${data.card.name}`, {
+          duration: 3000,
+        });
+      } else {
+        toast('🏪 Oponente visitó el Mercado Negro', {
+          icon: '🕵️',
+          duration: 2000,
+        });
       }
+    });
+
+    socket.on('black-market-interaction-required', (data) => {
+      console.log('Interacción requerida del Mercado Negro:', data);
+      if (data.playerId === state.playerId) {
+        setBlackMarketInteraction({
+          isOpen: true,
+          card: data.card,
+          interactionType: data.interactionType,
+          message: data.message,
+        });
+        toast(data.message, {
+          icon: '🎯',
+          duration: 5000,
+        });
+      }
+    });
+
+    socket.on('black-market-effect-completed', (data) => {
+      console.log('Efecto del Mercado Negro completado:', data);
+      toast.success(data.result, {
+        icon: '✨',
+        duration: 3000,
+      });
     });
 
     return () => {
@@ -118,6 +199,8 @@ const GamePage = () => {
       socket.off('error');
       socket.off('card-discarded');
       socket.off('black-market-taken');
+      socket.off('black-market-interaction-required');
+      socket.off('black-market-effect-completed');
     };
   }, [socket, gameId, dispatch, state.playerId]);
 
@@ -198,6 +281,126 @@ const GamePage = () => {
     setShowDiscardConfirm(false);
   };
 
+  // Manejar selección para efectos del Mercado Negro
+  const handleBlackMarketSelection = (selection) => {
+    if (!blackMarketInteraction.interactionType) return;
+
+    // Preparar la selección según el tipo
+    let formattedSelection = {};
+
+    switch (blackMarketInteraction.interactionType) {
+      case 'steal-agent':
+        // Mind Control - selecciona nombre de agente
+        formattedSelection = { agentName: selection.name };
+        break;
+
+      case 'recruit-different':
+      case 'recruit-from-hand':
+        // Secret Recruit / Double Trouble - selecciona carta de mano
+        formattedSelection = { card: selection };
+        break;
+
+      case 'recruit-sentinel':
+        // Outpost - automático, no necesita selección
+        formattedSelection = {};
+        break;
+
+      case 'return-and-recruit':
+        // Spycation - selecciona nombre de agente propio
+        formattedSelection = { agentName: selection.name };
+        break;
+
+      default:
+        console.error('Tipo de interacción desconocido');
+        return;
+    }
+
+    // Enviar selección al servidor
+    socket.emit('complete-black-market-effect', {
+      gameId,
+      selection: formattedSelection,
+    });
+
+    // Cerrar modal
+    setBlackMarketInteraction({
+      isOpen: false,
+      card: null,
+      interactionType: null,
+      message: '',
+    });
+  };
+
+  // Preparar opciones para el modal según el tipo de interacción
+  const getBlackMarketOptions = () => {
+    if (!blackMarketInteraction.interactionType) return { type: 'agents', options: [] };
+
+    const myPlayer = state.players?.find(p => p.id === state.playerId);
+    const opponent = state.players?.find(p => p.id !== state.playerId);
+
+    switch (blackMarketInteraction.interactionType) {
+      case 'steal-agent':
+        // Mind Control - mostrar agentes del oponente
+        if (!opponent || !opponent.recruitedAgents) return { type: 'opponent-agents', options: [] };
+        
+        const opponentAgents = Object.entries(opponent.recruitedAgents)
+          .map(([name, cards]) => ({
+            name,
+            count: cards.length,
+            cards,
+          }))
+          .filter(ag => ag.count > 0);
+        
+        return { type: 'opponent-agents', options: opponentAgents };
+
+      case 'recruit-different':
+        // Secret Recruit - mostrar cartas de mano que NO estén en juego
+        if (!myPlayer) return { type: 'hand', options: [] };
+        
+        const differentCards = state.hand.filter(card => 
+          !myPlayer.recruitedAgents || !myPlayer.recruitedAgents[card.name]
+        );
+        
+        return { type: 'hand', options: differentCards };
+
+      case 'recruit-from-hand':
+        // Double Trouble - mostrar cartas que tengan al menos 2 en mano
+        const cardCounts = {};
+        state.hand.forEach(card => {
+          cardCounts[card.name] = (cardCounts[card.name] || 0) + 1;
+        });
+        
+        const duplicateCards = state.hand.filter(card => cardCounts[card.name] >= 2);
+        const unique = duplicateCards.reduce((acc, card) => {
+          if (!acc.find(c => c.name === card.name)) acc.push(card);
+          return acc;
+        }, []);
+        
+        return { type: 'hand', options: unique };
+
+      case 'recruit-sentinel':
+        // Outpost - buscar Sentinel en mano
+        const sentinels = state.hand.filter(card => card.name === 'Sentinel');
+        return { type: 'hand', options: sentinels };
+
+      case 'return-and-recruit':
+        // Spycation - mostrar agentes propios en juego
+        if (!myPlayer || !myPlayer.recruitedAgents) return { type: 'agents', options: [] };
+        
+        const myAgents = Object.entries(myPlayer.recruitedAgents)
+          .map(([name, cards]) => ({
+            name,
+            count: cards.length,
+            cards,
+          }))
+          .filter(ag => ag.count > 0);
+        
+        return { type: 'agents', options: myAgents };
+
+      default:
+        return { type: 'agents', options: [] };
+    }
+  };
+
   const handleLeaveGame = () => {
     if (confirm('¿Seguro que quieres abandonar el juego?')) {
       socket.emit('leave-game', { gameId });
@@ -211,18 +414,27 @@ const GamePage = () => {
     }
 
     if (!state.isMyTurn && state.phase === 'recruiting') {
-      return 'Elige qué agente reclutar';
+      return '🎯 Elige qué agente reclutar';
     }
 
     if (state.isMyTurn && state.phase === 'playing') {
-      return 'Tu turno: Juega 2 cartas';
+      return '🎴 Tu turno: Juega 2 cartas';
     }
 
     if (state.isMyTurn && state.phase === 'recruiting') {
-      return 'Esperando que el oponente reclute...';
+      return '⏳ Esperando que el oponente reclute...';
     }
 
-    return 'Esperando al oponente...';
+    return '⏳ Turno del oponente...';
+  };
+
+  const getTurnIndicatorColor = () => {
+    if (state.phase === 'finished') {
+      return state.winner === state.playerId 
+        ? 'bg-green-600' 
+        : 'bg-red-600';
+    }
+    return state.isMyTurn ? 'bg-game-teal' : 'bg-orange-500';
   };
 
   const opponent = state.gameState?.players.find(
@@ -265,10 +477,10 @@ const GamePage = () => {
         </div>
 
         {/* Fase del juego */}
-        <div className="bg-slate-800 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-slate-700">
+        <div className={`rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border-2 transition-all duration-300 ${getTurnIndicatorColor()} ${state.isMyTurn && state.phase !== 'finished' ? 'animate-pulse shadow-lg' : ''}`}>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-xl font-semibold text-white truncate">
+              <h2 className="text-base sm:text-xl font-bold text-white truncate">
                 {getPhaseMessage()}
               </h2>
               {state.isMyTurn && (
@@ -547,6 +759,25 @@ const GamePage = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de selección para Mercado Negro */}
+      {blackMarketInteraction.isOpen && (() => {
+        const { type, options } = getBlackMarketOptions();
+        
+        return (
+          <AgentSelectionModal
+            isOpen={blackMarketInteraction.isOpen}
+            onClose={() => setBlackMarketInteraction({ isOpen: false, card: null, interactionType: null, message: '' })}
+            onSelect={handleBlackMarketSelection}
+            title={blackMarketInteraction.card?.name || 'Mercado Negro'}
+            description={blackMarketInteraction.message}
+            options={options}
+            type={type}
+            multiSelect={false}
+            maxSelections={1}
+          />
+        );
+      })()}
     </div>
   );
 };

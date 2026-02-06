@@ -14,22 +14,27 @@ const AGENT_IMAGES = {
 
 const Card = ({
   agent,
+  card, // Alias para agent (para compatibilidad)
   faceUp = true,
   onClick,
   selected = false,
   disabled = false,
-  size = 'md', // 'sm' | 'md' | 'lg'
+  size = 'md', // 'xs' | 'sm' | 'md' | 'lg'
   showCount = false,
   count = 0,
 }) => {
+  // Usar card si se proporciona, sino usar agent
+  const cardData = card || agent;
+  
   const sizeClasses = {
+    xs: 'w-12 h-18',
     sm: 'w-16 h-24',
     md: 'w-24 h-36',
     lg: 'w-32 h-48',
   };
 
   const imageSrc =
-    faceUp && agent ? AGENT_IMAGES[agent.name] : AGENT_IMAGES['Back'];
+    faceUp && cardData ? AGENT_IMAGES[cardData.name] : AGENT_IMAGES['Back'];
 
   return (
     <div
@@ -44,7 +49,7 @@ const Card = ({
       {/* Imagen de la carta */}
       <img
         src={imageSrc}
-        alt={faceUp && agent ? agent.name : 'Card Back'}
+        alt={faceUp && cardData ? cardData.name : 'Card Back'}
         className="w-full h-full object-cover"
         onError={(e) => {
           e.target.style.display = 'none';
