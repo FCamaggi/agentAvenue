@@ -561,6 +561,10 @@ export function setupSocketHandlers(io) {
                 let opponentWin = checkWinConditions(opponent, currentPlayer, true)
                 let playerWin = checkWinConditions(currentPlayer, opponent, true)
 
+                console.log('🏆 WIN CONDITIONS CHECK:')
+                console.log('  CurrentPlayer:', currentPlayer.name, '- Won:', playerWin.won, 'Lost:', playerWin.lost, 'Reason:', playerWin.reason)
+                console.log('  Opponent:', opponent.name, '- Won:', opponentWin.won, 'Lost:', opponentWin.lost, 'Reason:', opponentWin.reason)
+
                 // Verificar condiciones especiales de Mercado Negro
                 if (game.gameMode === 'advanced') {
                     const opponentBMWin = checkBlackMarketWinConditions(opponent, currentPlayer)
@@ -571,13 +575,34 @@ export function setupSocketHandlers(io) {
                 }
 
                 if (opponentWin.won || playerWin.won || opponentWin.lost || playerWin.lost) {
-                    // Determinar ganador
-                    if (playerWin.won || opponentWin.lost) {
-                        game.winner = currentPlayer.id
-                    } else if (opponentWin.won || playerWin.lost) {
-                        game.winner = opponent.id
+                    // Determinar ganador - lógica simplificada
+                    // Solo uno puede haber capturado al otro (matemáticamente imposible que ambos capturen)
+                    let winnerId = null
+                    let winReason = null
+                    
+                    if (playerWin.won) {
+                        // CurrentPlayer capturó o ganó de otra forma
+                        winnerId = currentPlayer.id
+                        winReason = playerWin.reason
+                        console.log('  ✅ Winner:', currentPlayer.name, '(currentPlayer ganó)')
+                    } else if (opponentWin.won) {
+                        // Opponent capturó o ganó de otra forma
+                        winnerId = opponent.id
+                        winReason = opponentWin.reason
+                        console.log('  ✅ Winner:', opponent.name, '(opponent ganó)')
+                    } else if (opponentWin.lost) {
+                        // Opponent perdió (3 Daredevils)
+                        winnerId = currentPlayer.id
+                        winReason = opponentWin.reason
+                        console.log('  ✅ Winner:', currentPlayer.name, '(opponent perdió)')
+                    } else if (playerWin.lost) {
+                        // CurrentPlayer perdió (3 Daredevils)
+                        winnerId = opponent.id
+                        winReason = playerWin.reason
+                        console.log('  ✅ Winner:', opponent.name, '(currentPlayer perdió)')
                     }
 
+                    game.winner = winnerId
                     game.status = 'finished'
                     game.phase = 'finished'
 
@@ -585,7 +610,7 @@ export function setupSocketHandlers(io) {
 
                     io.to(game.lobbyCode).emit('game-over', {
                         winner: game.winner,
-                        reason: playerWin.reason || opponentWin.reason,
+                        reason: winReason,
                     })
                 } else {
                     // Continuar juego
