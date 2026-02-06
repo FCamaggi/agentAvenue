@@ -372,18 +372,21 @@ export function setupSocketHandlers(io) {
                 refillHand(player.hand, game.deck)
 
                 game.phase = 'recruiting'
+                
+                console.log('📤 CARDS PLAYED - EMITTING:')
+                console.log('  Current Player (still):', game.currentPlayer)
+                console.log('  New Phase:', game.phase)
+                console.log('  Opponent must recruit now')
+                
                 await game.save()
 
-                // Pequeño delay para que se vea la acción
-                setTimeout(() => {
-                    // Notificar cartas jugadas
-                    io.to(game.lobbyCode).emit('cards-played', {
-                        faceUp: game.playedCards.faceUp,
-                        faceDown: game.playedCards.faceDown,
-                    })
+                // Notificar cartas jugadas INMEDIATAMENTE
+                io.to(game.lobbyCode).emit('cards-played', {
+                    faceUp: game.playedCards.faceUp,
+                    faceDown: game.playedCards.faceDown,
+                })
 
-                    io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
-                }, 300)
+                io.to(game.lobbyCode).emit('game-state-updated', { gameState: game })
 
                 // Si el oponente es un bot, que reclute automáticamente
                 const opponent = game.players.find(p => p.id !== game.currentPlayer)
@@ -401,6 +404,12 @@ export function setupSocketHandlers(io) {
             try {
                 const game = await Game.findById(gameId)
 
+                console.log('🎯 RECRUIT-AGENT REQUEST:')
+                console.log('  Player ID:', socket.playerId)
+                console.log('  Current Player:', game?.currentPlayer)
+                console.log('  Phase:', game?.phase)
+                console.log('  Choice:', choice)
+
                 if (!game || game.status !== 'active') {
                     return socket.emit('error', { message: 'Juego no válido' })
                 }
@@ -412,6 +421,10 @@ export function setupSocketHandlers(io) {
                 // El oponente (no el jugador actual) elige
                 const opponent = game.players.find(p => p.id === socket.playerId)
                 const currentPlayer = game.players.find(p => p.id === game.currentPlayer)
+
+                console.log('  Opponent (recruiter):', opponent?.name)
+                console.log('  Current Player:', currentPlayer?.name)
+                console.log('  Can recruit?:', opponent?.id !== game.currentPlayer)
 
                 if (!opponent || opponent.id === game.currentPlayer) {
                     return socket.emit('error', { message: 'No puedes reclutar en tu turno' })

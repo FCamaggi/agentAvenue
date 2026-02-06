@@ -256,9 +256,16 @@ const GamePage = () => {
   };
 
   const handleRecruitChoice = (cardType) => {
+    console.log('🎯 RECRUIT CHOICE CLICKED:')
+    console.log('  Card Type:', cardType)
+    console.log('  Phase:', state.phase)
+    console.log('  Is My Turn:', state.isMyTurn)
+    console.log('  Can recruit?:', state.phase === 'recruiting' && !state.isMyTurn)
+    
     if (state.phase !== 'recruiting' || state.isMyTurn) return;
 
     setRecruitChoice(cardType);
+    console.log('  ✅ Emitting recruit-agent event')
     socket.emit('recruit-agent', {
       gameId,
       choice: cardType, // 'faceUp' | 'faceDown'
