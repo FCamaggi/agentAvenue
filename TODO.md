@@ -30,6 +30,12 @@
 - Ambos modos tienen las mismas cartas
 - Solo el Mercado Negro diferencia Simple de Avanzado
 
+### ✅ 6. Lógica de captura
+- **ARREGLADO**: checkCapture ahora detecta correctamente cuando un jugador alcanza/pasa al otro
+- Antes solo verificaba si estaban en la misma posición
+- Ahora verifica: misma posición O distancia > TOTAL_TILES/2 (pasó al oponente)
+- Según manual: "Si tu peón supera la posición de su peón, cuenta como captura"
+
 ## ✅ COMPLETADO - UX/UI Mejoras
 
 ### ✅ 6. Sistema de notificaciones
@@ -39,24 +45,41 @@
 
 ### ✅ 7. Animaciones mejoradas
 - **IMPLEMENTADO**: Nuevas animaciones CSS
-- `pawn-moving`: Animación extendida para movimiento de fichas (1.5s)
+- `pawn-moving`: Animación extendida para movimiento de fichas (1.5s) con rotación y sombras
 - `card-flip`: Flip de carta al revelar (0.6s)
 - `highlight-pulse`: Pulso amarillo para eventos importantes
 
 ### ✅ 8. Indicador de turno visual
 - **IMPLEMENTADO**: Barra de estado con color y animación
-- Verde/Teal cuando es tu turno (con pulse)
+- Verde/Teal cuando es tu turno (con pulse y ring)
 - Naranja cuando es turno del oponente
 - Emojis para mejor comprensión (🎴 🎯 ⏳)
+- Shadow-2xl y ring-4 para mayor prominencia
 
 ### ✅ 9. Proporciones del tablero
 - **AJUSTADO**: Aspect ratio cambiado de 3/4 a 4/3
 - Reducción de gaps y borders para mejor compresión vertical
 - Tablero más horizontal y menos alto
+- Imagen de fondo con object-contain y padding 5% para expandir verticalmente
 
 ### ✅ 10. Delays en acciones
 - **IMPLEMENTADO**: 300ms delay después de jugar cartas
 - Permite que los jugadores vean los eventos antes del siguiente
+
+### ✅ 11. Visibilidad de agentes del oponente
+- **IMPLEMENTADO**: Agentes reclutados del oponente ahora se ven boca arriba
+- Antes solo se veía el dorso de las cartas
+
+### ✅ 12. Mejoras visuales del tablero y fichas
+- **IMPLEMENTADO**: Fichas más grandes (w-7 h-7 / w-8 h-8)
+- Gradientes en fichas: from-{color} to-{color-dark}
+- Sombras mejoradas en fichas: shadow-xl y shadow-2xl
+- Brillo interior en fichas con div opacity-30
+- Indicador amarillo para el jugador activo en la ficha
+- Tablero con gradiente: from-teal-200/40 to-cyan-300/30
+- Espaciado aumentado en grid: gap-0.5 → gap-1
+- RecruitedAgents con gradientes y diseño mejorado
+- Iconos 🎭 para oponente y 👤 para jugador
 
 
 ## 📋 Pendiente (Opcional/Futuro)
