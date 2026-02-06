@@ -447,48 +447,9 @@ export function setupSocketHandlers(io) {
                 playerAgentList.push(playerCard)
                 currentPlayer.recruitedAgents.set(playerCard.name, playerAgentList)
 
-                // 🔍 VERIFICAR CAPTURA ANTES DEL MOVIMIENTO
-                // Si ya había captura antes de este turno, el juego termina sin permitir escape
-                const playerStartPos = START_POSITIONS[currentPlayer.color]
-                const opponentStartPos = START_POSITIONS[opponent.color]
-                
-                console.log('🔍 PRE-MOVEMENT CAPTURE CHECK:')
-                console.log('  Positions BEFORE movement - Player:', currentPlayer.position, 'Opponent:', opponent.position)
-                
-                const preMovementOpponentCapture = checkCapture(opponent.position, currentPlayer.position, true, opponentStartPos, playerStartPos)
-                const preMovementPlayerCapture = checkCapture(currentPlayer.position, opponent.position, true, playerStartPos, opponentStartPos)
-                
-                if (preMovementOpponentCapture) {
-                    console.log('  ⚠️ CAPTURA PRE-EXISTENTE: Opponent ya había capturado a CurrentPlayer')
-                    game.winner = opponent.id
-                    game.status = 'finished'
-                    game.phase = 'finished'
-                    game.playedCards = { faceUp: null, faceDown: null }
-                    await game.save()
-                    
-                    io.to(game.lobbyCode).emit('game-over', {
-                        winner: opponent.id,
-                        reason: 'captured_opponent',
-                    })
-                    return
-                } else if (preMovementPlayerCapture) {
-                    console.log('  ⚠️ CAPTURA PRE-EXISTENTE: CurrentPlayer ya había capturado a Opponent')
-                    game.winner = currentPlayer.id
-                    game.status = 'finished'
-                    game.phase = 'finished'
-                    game.playedCards = { faceUp: null, faceDown: null }
-                    await game.save()
-                    
-                    io.to(game.lobbyCode).emit('game-over', {
-                        winner: currentPlayer.id,
-                        reason: 'captured_opponent',
-                    })
-                    return
-                }
-                
-                console.log('  ✅ No hay captura previa - continuar con movimientos')
-
                 // Mover peones (aplicar efectos permanentes de Mercado Negro)
+                // IMPORTANTE: Ambos jugadores se mueven ANTES de verificar victoria
+                // Esto permite que un jugador "escape" si ambos se mueven simultáneamente
                 let opponentMovement = calculateMovement(opponentCard, opponentAgentList.length)
                 opponentMovement = checkPermanentEffects(opponent, opponentCard.name, opponentMovement)
                 const oldOpponentPos = opponent.position
