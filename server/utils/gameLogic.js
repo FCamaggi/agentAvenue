@@ -70,24 +70,30 @@ export function movePawn(currentPosition, movement) {
 }
 
 // Verificar si un jugador capturó al oponente
-export function checkCapture(player1Pos, player2Pos, isPlayer1Active) {
-    // El jugador activo captura si su posición alcanza o supera la del oponente
-    // Considerando el movimiento en sentido horario
-
-    if (isPlayer1Active) {
-        // Calcular distancia en sentido horario desde player1 hasta player2
-        let distance = player2Pos - player1Pos
-        if (distance < 0) distance += TOTAL_TILES
-
-        // Si la distancia es 0, están en la misma posición = captura
-        return distance === 0
-    } else {
-        // Lo mismo pero desde player2 hasta player1
-        let distance = player1Pos - player2Pos
-        if (distance < 0) distance += TOTAL_TILES
-
-        return distance === 0
+export function checkCapture(playerPos, opponentPos, isPlayerTurn) {
+    // Solo el jugador activo (en su turno) puede capturar
+    // Según el manual: "Si tu peón supera la posición de su peón, cuenta como captura"
+    
+    if (!isPlayerTurn) {
+        return false // Solo el jugador activo puede capturar en su turno
     }
+
+    // Caso 1: Están en la misma posición = captura
+    if (playerPos === opponentPos) {
+        return true
+    }
+
+    // Caso 2: Calcular si el jugador pasó al oponente en sentido horario
+    // Distancia en sentido horario desde player hasta opponent
+    let distanceToOpponent = opponentPos - playerPos
+    if (distanceToOpponent < 0) {
+        distanceToOpponent += TOTAL_TILES
+    }
+
+    // Si la distancia es mayor a la mitad del tablero, significa que el jugador
+    // pasó al oponente (está "detrás" en términos de persecución circular)
+    // Ejemplo: Green en 7, Blue en 6 → distancia = 6-7 = -1, normalizado = 13 > 7 = captura
+    return distanceToOpponent > TOTAL_TILES / 2
 }
 
 // Verificar condiciones de victoria/derrota

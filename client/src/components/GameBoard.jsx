@@ -180,13 +180,13 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto aspect-[4/3] bg-teal-200/30 rounded-3xl p-1 sm:p-2 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
+    <div className="relative w-full max-w-3xl mx-auto aspect-[4/3] bg-gradient-to-br from-teal-200/40 to-cyan-300/30 rounded-3xl p-1 sm:p-2 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
       {/* Imagen de fondo */}
       <div className="absolute inset-0 z-0 p-[5%]">
         <img
           src={getBackgroundImage()}
           alt="Board Background"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain drop-shadow-lg"
           onError={(e) => {
             e.target.style.display = 'none';
           }}
@@ -194,7 +194,7 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
       </div>
 
       {/* Grid de casillas */}
-      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-0.5">{
+      <div className="relative z-10 w-full h-full grid grid-cols-4 grid-rows-5 gap-1">{
         {tiles.map((tile) => {
           const { bgColor, textColor, icon, rotation, isPath } =
             getTileConfig(tile);
@@ -250,37 +250,45 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
               {/* Peones */}
               {pawns.length > 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="flex gap-0.5 sm:gap-1">
+                  <div className="flex gap-1">
                     {pawns.map((player, idx) => {
                       const isMyPawn = playerId && player.id === playerId;
                       return (
                         <div
                           key={player.id}
                           className={`
-                            w-5 h-5 sm:w-6 sm:h-6 rounded-full shadow-lg 
+                            relative w-7 h-7 sm:w-8 sm:h-8 rounded-full
                             pawn-animate
                             ${
                               player.color === 'green'
-                                ? 'bg-game-green'
+                                ? 'bg-gradient-to-br from-game-green to-emerald-600'
                                 : player.color === 'blue'
-                                  ? 'bg-game-blue'
+                                  ? 'bg-gradient-to-br from-game-blue to-cyan-600'
                                   : player.color === 'red'
-                                    ? 'bg-red-600'
-                                    : 'bg-yellow-600'
+                                    ? 'bg-gradient-to-br from-red-500 to-red-700'
+                                    : 'bg-gradient-to-br from-yellow-400 to-yellow-600'
                             }
                             ${
                               isMyPawn
-                                ? 'border-4 border-white ring-2 ring-yellow-400 animate-pulse'
-                                : 'border-2 border-white'
+                                ? 'border-4 border-white ring-4 ring-yellow-400 animate-pulse shadow-2xl'
+                                : 'border-3 border-white shadow-xl'
                             }
                           `}
                           style={{
                             transform:
                               pawns.length > 1
-                                ? `translateX(${idx * -4}px)`
+                                ? `translateX(${idx * -6}px)`
                                 : 'none',
+                            zIndex: isMyPawn ? 30 : 20 + idx,
                           }}
-                        />
+                        >
+                          {/* Brillo interior */}
+                          <div className="absolute inset-0 rounded-full bg-white opacity-30 blur-sm" />
+                          {/* Indicador del jugador activo */}
+                          {isMyPawn && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white animate-pulse" />
+                          )}
+                        </div>
                       );
                     })}
                   </div>

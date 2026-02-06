@@ -481,10 +481,10 @@ const GamePage = () => {
         </div>
 
         {/* Fase del juego */}
-        <div className={`rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border-2 transition-all duration-300 ${getTurnIndicatorColor()} ${state.isMyTurn && state.phase !== 'finished' ? 'animate-pulse shadow-lg' : ''}`}>
-          <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className={`rounded-xl p-4 sm:p-5 mb-6 border-2 transition-all duration-300 ${getTurnIndicatorColor()} ${state.isMyTurn && state.phase !== 'finished' ? 'animate-pulse shadow-2xl ring-4 ring-white/20' : 'shadow-xl'}`}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-xl font-bold text-white truncate">
+              <h2 className="text-lg sm:text-2xl font-bold text-white truncate drop-shadow-lg">
                 {getPhaseMessage()}
               </h2>
               {state.isMyTurn && (
