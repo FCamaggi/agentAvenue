@@ -33,21 +33,39 @@ const PlayerHand = ({
               No tienes cartas en mano
             </div>
           ) : (
-            cards.map((card, index) => (
-              <div key={`hand-${index}`} className="flex-shrink-0 card-appear">
-                <Card
-                  agent={card}
-                  faceUp={true}
-                  onClick={() => handleCardClick(card, index)}
-                  selected={isSelected(index)}
-                  disabled={
-                    disabled ||
-                    (selectedCards.length >= maxSelection && !isSelected(index))
-                  }
-                  size="lg"
-                />
-              </div>
-            ))
+            cards.map((card, index) => {
+              const selectionIndex = selectedCards.indexOf(index);
+              const isFirstSelected = selectionIndex === 0;
+              const isSecondSelected = selectionIndex === 1;
+              
+              return (
+                <div key={`hand-${index}`} className="flex-shrink-0 card-appear relative">
+                  {/* Badge indicador */}
+                  {isFirstSelected && (
+                    <div className="absolute -top-2 -right-2 z-10 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border-2 border-white">
+                      👆 Boca Arriba
+                    </div>
+                  )}
+                  {isSecondSelected && (
+                    <div className="absolute -top-2 -right-2 z-10 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border-2 border-white">
+                      👇 Boca Abajo
+                    </div>
+                  )}
+                  
+                  <Card
+                    agent={card}
+                    faceUp={true}
+                    onClick={() => handleCardClick(card, index)}
+                    selected={isSelected(index)}
+                    disabled={
+                      disabled ||
+                      (selectedCards.length >= maxSelection && !isSelected(index))
+                    }
+                    size="lg"
+                  />
+                </div>
+              );
+            })
           )}
         </div>
       </div>

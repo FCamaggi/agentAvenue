@@ -180,13 +180,13 @@ const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto aspect-[4/3] bg-teal-200/30 rounded-3xl p-2 sm:p-3 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
+    <div className="relative w-full max-w-2xl mx-auto aspect-[4/3] bg-teal-200/30 rounded-3xl p-1 sm:p-2 shadow-2xl border-4 sm:border-6 border-teal-100/80 overflow-hidden">
       {/* Imagen de fondo */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 p-[5%]">
         <img
           src={getBackgroundImage()}
           alt="Board Background"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           onError={(e) => {
             e.target.style.display = 'none';
           }}

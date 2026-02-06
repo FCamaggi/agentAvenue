@@ -136,7 +136,7 @@ const GamePage = () => {
       toast.error(error.message, {
         duration: 3000,
       });
-      setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 5000);
+      setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 3000);
     });
 
     socket.on('card-discarded', (data) => {
@@ -229,8 +229,12 @@ const GamePage = () => {
         type: 'SET_ERROR',
         payload: 'Debes jugar dos cartas diferentes',
       });
+      setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 3000);
       return;
     }
+
+    // Limpiar error anterior si existe
+    dispatch({ type: 'CLEAR_ERROR' });
 
     socket.emit('play-cards', {
       gameId,
@@ -632,6 +636,22 @@ const GamePage = () => {
             disabled={!state.isMyTurn || state.phase !== 'playing'}
             maxSelection={2}
           />
+
+          {/* Indicadores de selección */}
+          {selectedHandCards.length > 0 && state.isMyTurn && state.phase === 'playing' && (
+            <div className="mt-3 flex justify-center gap-3 text-sm">
+              {selectedHandCards.length >= 1 && (
+                <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-2 rounded-lg font-semibold">
+                  👆 1ra carta → Boca Arriba
+                </div>
+              )}
+              {selectedHandCards.length >= 2 && (
+                <div className="bg-purple-500/20 border border-purple-500 text-purple-400 px-4 py-2 rounded-lg font-semibold">
+                  👆 2da carta → Boca Abajo
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Botones de acción */}
           {state.isMyTurn && state.phase === 'playing' && (
