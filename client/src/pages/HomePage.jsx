@@ -29,11 +29,9 @@ const HomePage = () => {
     setLoading(true);
     setError('');
 
-    const withBot = action === 'create-bot';
-
     socket.emit(
       'create-lobby',
-      { playerName, gameMode, withBot },
+      { playerName, gameMode, withBot: false },
       (response) => {
         setLoading(false);
 
@@ -155,13 +153,6 @@ const HomePage = () => {
               </button>
 
               <button
-                onClick={() => setAction('create-bot')}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm sm:text-base"
-              >
-                🤖 Jugar contra Bot
-              </button>
-
-              <button
                 onClick={() => setAction('join')}
                 className="w-full bg-game-blue hover:bg-blue-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg text-sm sm:text-base"
               >
@@ -215,25 +206,6 @@ const HomePage = () => {
                   </div>
                 )}
 
-                {action === 'create-bot' && (
-                  <div>
-                    <label className="block text-slate-300 mb-2 font-medium">
-                      Modo de Juego
-                    </label>
-                    <select
-                      value={gameMode}
-                      onChange={(e) => setGameMode(e.target.value)}
-                      className="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-game-teal focus:outline-none focus:ring-2 focus:ring-game-teal/50"
-                    >
-                      <option value="simple">Modo Simple</option>
-                      <option value="advanced">Modo Avanzado</option>
-                    </select>
-                    <p className="text-slate-400 text-sm mt-2">
-                      🤖 Jugarás contra un oponente controlado por IA
-                    </p>
-                  </div>
-                )}
-
                 {action === 'join' && (
                   <div>
                     <label className="block text-slate-300 mb-2 font-medium">
@@ -260,7 +232,7 @@ const HomePage = () => {
 
                 <button
                   onClick={
-                    action === 'create' || action === 'create-bot'
+                    action === 'create'
                       ? handleCreateLobby
                       : handleJoinLobby
                   }
@@ -271,9 +243,7 @@ const HomePage = () => {
                     ? 'Procesando...'
                     : action === 'create'
                       ? 'Crear Sala'
-                      : action === 'create-bot'
-                        ? 'Iniciar Partida con Bot'
-                        : 'Unirse'}
+                      : 'Unirse'}
                 </button>
               </div>
             </div>

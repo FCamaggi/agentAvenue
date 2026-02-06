@@ -25,7 +25,7 @@ const BurglarIcon = () => (
   </svg>
 );
 
-const GameBoard = ({ gameState, isAdvancedMode, onTileClick }) => {
+const GameBoard = ({ gameState, playerId, isAdvancedMode, onTileClick }) => {
   // Definición de las casillas (14 tiles en total)
   const tiles = [
     // Top Row (1-4)
@@ -251,30 +251,38 @@ const GameBoard = ({ gameState, isAdvancedMode, onTileClick }) => {
               {pawns.length > 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                   <div className="flex gap-0.5 sm:gap-1">
-                    {pawns.map((player, idx) => (
-                      <div
-                        key={player.id}
-                        className={`
-                          w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-white shadow-lg 
-                          pawn-animate
-                          ${
-                            player.color === 'green'
-                              ? 'bg-game-green'
-                              : player.color === 'blue'
-                                ? 'bg-game-blue'
-                                : player.color === 'red'
-                                  ? 'bg-red-600'
-                                  : 'bg-yellow-600'
-                          }
-                        `}
-                        style={{
-                          transform:
-                            pawns.length > 1
-                              ? `translateX(${idx * -4}px)`
-                              : 'none',
-                        }}
-                      />
-                    ))}
+                    {pawns.map((player, idx) => {
+                      const isMyPawn = playerId && player.id === playerId;
+                      return (
+                        <div
+                          key={player.id}
+                          className={`
+                            w-5 h-5 sm:w-6 sm:h-6 rounded-full shadow-lg 
+                            pawn-animate
+                            ${
+                              player.color === 'green'
+                                ? 'bg-game-green'
+                                : player.color === 'blue'
+                                  ? 'bg-game-blue'
+                                  : player.color === 'red'
+                                    ? 'bg-red-600'
+                                    : 'bg-yellow-600'
+                            }
+                            ${
+                              isMyPawn 
+                                ? 'border-4 border-white ring-2 ring-yellow-400 animate-pulse'
+                                : 'border-2 border-white'
+                            }
+                          `}
+                          style={{
+                            transform:
+                              pawns.length > 1
+                                ? `translateX(${idx * -4}px)`
+                                : 'none',
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               )}

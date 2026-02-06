@@ -35,6 +35,11 @@ const GamePage = () => {
     socket.on('game-state-updated', (data) => {
       dispatch({ type: 'UPDATE_GAME_STATE', payload: data.gameState });
 
+      // Actualizar fase del juego
+      if (data.gameState.phase) {
+        dispatch({ type: 'SET_PHASE', payload: data.gameState.phase });
+      }
+
       // Actualizar mano del jugador
       const myPlayer = data.gameState.players.find(
         (p) => p.id === state.playerId,
@@ -302,6 +307,7 @@ const GamePage = () => {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <GameBoard
               gameState={state.gameState}
+              playerId={state.playerId}
               isAdvancedMode={state.gameMode === 'advanced'}
             />
 
